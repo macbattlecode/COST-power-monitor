@@ -36,7 +36,8 @@ channel_assignment = {1: "nothing", 2: "internal voltage", 3: "current", 4: "not
 sim = False
 volcal = 2250
 volcal_std = 50
-scope_id = "USB0::0x05FF::0x1023::LCRY3702N14161::INSTR"
+#scope_id = "USB0::0x05FF::0x1023::LCRY3702N14161::INSTR"
+scope_id = "USB0::2391::6042::MY52141064::INSTR"
 resistance = 4.2961608775
 frequency = 13560000
 result_queue = Queue(100)
@@ -44,7 +45,7 @@ voltage_ref_phase = 0
 voltage_ref_phase_std = 0
 current_ref_phase = 0
 current_ref_phase_std = 0
-ref_size = 3 # Number of phase reference points to average over
+ref_size = 30 # Number of phase reference points to average over
 
 class main_window(QWidget):  
     def __init__(self):
@@ -470,12 +471,15 @@ class sweeper():
     
     def io_worker(self, data_queue):
         """ Gets waveforms from the scope and puts them into the data_queue."""
-        scope = ivi.lecroy.lecroyWS3054(scope_id)
+        #scope = ivi.lecroy.lecroyWS3054(scope_id)
+        scope = ivi.agilent.agilentDSOX2004A()
         if not sim:
             scope.initialize(scope_id)
             #scope.set_timeout(5)
         while True and not sim:
             data_dict = {}
+            #scope._set_trigger_mode("stop")
+            #time.sleep(0.5)
             scope.measurement.initiate()
             for chan_num in self.channels:
                 chan_name = self.channels[chan_num]
@@ -559,6 +563,7 @@ class sweeper():
         #plt.plot(time, amplitude)
         #plt.show()
         #print(guess_mean)
+        print(est_freq)
         return (est_ampl, est_freq, est_phase%(2*np.pi))
   
 if __name__ == '__main__': 
