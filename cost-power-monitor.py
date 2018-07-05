@@ -17,6 +17,8 @@ from scipy import stats
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import *
 import pyqtgraph
+
+import matplotlib.pyplot as plt
 # importing this after pyqt5 tells pyqtgraph to use qt5 instead of 4
 
 #cfg = configparser.ConfigParser()
@@ -34,7 +36,7 @@ channel_assignment = {1: "nothing", 2: "internal voltage", 3: "current", 4: "not
 sim = False
 volcal = 2250
 volcal_std = 50
-scope_id = "USB0::0x0957::0x175D::INSTR"
+scope_id = "USB0::0x05FF::0x1023::LCRY3702N14161::INSTR"
 resistance = 4.2961608775
 frequency = 13560000
 result_queue = Queue(100)
@@ -42,7 +44,7 @@ voltage_ref_phase = 0
 voltage_ref_phase_std = 0
 current_ref_phase = 0
 current_ref_phase_std = 0
-ref_size = 5 # Number of phase reference points to average over
+ref_size = 3 # Number of phase reference points to average over
 
 class main_window(QWidget):  
     def __init__(self):
@@ -71,8 +73,8 @@ class data_monitor(QVBoxLayout):
         self.tab_bar = QTabWidget()
         self.graph = pyqtgraph.PlotWidget(name='Plot1')
         self.table = QTableWidget()
-        self.table.setColumnCount(5)
-        self.table.setHorizontalHeaderLabels(["Voltage","Current","Phaseshift","Power","Time"])
+        self.table.setColumnCount(4)
+        self.table.setHorizontalHeaderLabels(["Voltage","Current","Phaseshift","Power"])
         self.tab_bar.addTab(self.table, "Table")
         self.tab_bar.addTab(self.graph, "Graph")
 
@@ -127,7 +129,7 @@ class data_monitor(QVBoxLayout):
                         "# Channel Settings: " +  str(channel_assignment) + "\n\n")
                     
             table_header = ("Voltage" + seperator + "Current" +  seperator + 
-                "Phaseshift" + seperator + "Power" + seperator + "Time" + next_line)
+                "Phaseshift" + seperator + "Power" + next_line)
 
             lines = [header, table_header]
             for x in range(self.table.rowCount()):
@@ -168,8 +170,6 @@ class data_monitor(QVBoxLayout):
         self.table.insertRow(self.table.rowCount())
         for i,d in enumerate(data):
             self.table.setItem(self.table.rowCount()-1,i,QTableWidgetItem(str(d)))
-        time = datetime.datetime.now().time().strftime("%H:%M:%S")
-        self.table.setItem(self.table.rowCount()-1,self.table.columnCount()-1,QTableWidgetItem(str(time)))        
         self.table.scrollToBottom()
             
         
@@ -447,11 +447,6 @@ class sweeper():
             ) % (2*np.pi)
         v_phase_diff_sum = 0
         c_phase_diff_sum = 0
-        print(v_phases)
-        print()
-        print(c_phases)
-        print()
-        print(np.array(v_phases)-np.array(c_phases))
         for angle in v_phases:
             # Next line seems to work. It's all very complicated.
             v_phase_diff_sum = (v_phase_diff_sum
@@ -475,7 +470,7 @@ class sweeper():
     
     def io_worker(self, data_queue):
         """ Gets waveforms from the scope and puts them into the data_queue."""
-        scope = ivi.agilent.agilentMSO7104B()
+        scope = ivi.lecroy.lecroyWS3054(scope_id)
         if not sim:
             scope.initialize(scope_id)
             #scope.set_timeout(5)
@@ -525,11 +520,26 @@ class sweeper():
         data = np.array(data)
         time = data[:,0]
         amplitude = data[:,1]
-        guess_mean = np.mean(amplitude)
-        guess_amplitude = np.amax(amplitude)
+        guess_mean = sum(amplitude)/len(amplitude) # np.mean(amplitude)
+
+        guess_amplitude = max(amplitude)
         guess_phase = 0
         guess_y0 = 0
         guess_frequency = frequency
+        
+        amp = amplitude[:100]
+        #for i in amp:
+        #    print(i)
+        #print(sum(amp))
+        #print(type(amplitude))
+        #print(type(amplitude[0]))
+        #print(sum(amplitude)) # does not work. why
+        #number = amplitude[-1]
+        #print(type(number))
+            
+        
+
+
         data_first_guess = (guess_amplitude
                     *np.sin(time*guess_frequency*2*np.pi + guess_phase%(2*np.pi))
                     + guess_mean)
@@ -543,6 +553,12 @@ class sweeper():
         if est_ampl < 0:
             est_ampl = np.abs(est_ampl)
             est_phase = est_phase + np.pi
+  #      print(np.max(amplitude))
+  #      print(max(amplitude))
+        #plt.plot(time, data_first_guess)
+        #plt.plot(time, amplitude)
+        #plt.show()
+        #print(guess_mean)
         return (est_ampl, est_freq, est_phase%(2*np.pi))
   
 if __name__ == '__main__': 
