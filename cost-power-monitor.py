@@ -2,7 +2,7 @@
 
 import sys
 import string
-import configparser  
+import configparser
 import time
 import numpy as np
 import pylab
@@ -47,7 +47,7 @@ current_ref_phase = 0
 current_ref_phase_std = 0
 ref_size = 30 # Number of phase reference points to average over
 
-class main_window(QWidget):  
+class main_window(QWidget):
     def __init__(self):
         super().__init__()
         l_main_Layout = QHBoxLayout()
@@ -56,16 +56,16 @@ class main_window(QWidget):
         l_main_Layout.addLayout(this_data_monitor)
         l_main_Layout.addLayout(this_ctrl_panel)
         #l_main_Layout.addWidget(l_ctl_panel)
-        
+
         self.rand_data = np.random.normal(size=100)
         #this_data_monitor.update(rand_data)
 
         #l_data_monitor.addWidget(graph)
-        
+
         self.setLayout(l_main_Layout)
         self.setGeometry(300, 300, 1000, 400)
         self.setWindowTitle("COST Power Monitor")
-        self.show() 
+        self.show()
 
 class data_monitor(QVBoxLayout):
     def __init__(self):
@@ -83,7 +83,7 @@ class data_monitor(QVBoxLayout):
         self.update_timer.setInterval(500)
         self.update_timer.timeout.connect(self.update)
         self.update_timer.start()
-    
+
         #btn_group = QGroupBox()
         btn_layout = QHBoxLayout()
         clear_btn = QPushButton("Clear")
@@ -98,38 +98,38 @@ class data_monitor(QVBoxLayout):
         btn_layout.addWidget(plot_btn)
         btn_layout.addWidget(copy_btn)
         btn_layout.addWidget(save_btn)
-        
+
         #power_group.setLayout(power_layout)
-        
+
         #show_power_row = QHBoxLayout()
-    
+
         self.power_dspl = QLabel("0 W")
         self.addWidget(self.power_dspl)
         self.addWidget(self.tab_bar)
         self.addLayout(btn_layout)
-        
-     
+
+
     def clear_data(self):
         global result_queue
         result_queue.close()
-        result_queue = Queue(100) 
+        result_queue = Queue(100)
         self.table.setRowCount(0)
-        
+
     def save_data(self):
         seperator = "\t "
         next_line = " \n"
         filename = QFileDialog.getSaveFileName(caption='Save File', filter='*.txt')
         if filename:
             f = open(filename[0], 'w')
-            phaseshift = (str(voltage_ref_phase - current_ref_phase) + " +- " + 
+            phaseshift = (str(voltage_ref_phase - current_ref_phase) + " +- " +
                 str(voltage_ref_phase_std + current_ref_phase_std))
             header = (  "## cost-power-monitor file ## \n"+
                         "# " + str(datetime.datetime.now()) + "\n" +
                         "# Reference phaseshift: " + phaseshift + "\n" +
                         "# Calibration factor: " + str(volcal) + "\n" +
                         "# Channel Settings: " +  str(channel_assignment) + "\n\n")
-                    
-            table_header = ("Voltage" + seperator + "Current" +  seperator + 
+
+            table_header = ("Voltage" + seperator + "Current" +  seperator +
                 "Phaseshift" + seperator + "Power" + next_line)
 
             lines = [header, table_header]
@@ -139,11 +139,11 @@ class data_monitor(QVBoxLayout):
                     this_line = this_line + str(self.table.item(x,y).text()) + seperator
                 lines.append(this_line + next_line)
             f.writelines(lines)
-                    
-                
+
+
     def copy_data(self):
         return "Nope"
-     
+
     def update(self):
         while not result_queue.empty():
             new_data = result_queue.get()
@@ -152,12 +152,12 @@ class data_monitor(QVBoxLayout):
                 self.update_table(new_data)
                 self.update_power_dspl(new_data[-1])
         #self.update_graph()
-    
+
     def update_power_dspl(self, power):
         self.power_dspl.setText("Power: " + str(power) + " W")
-        
+
     def update_graph(self):
-        """Updates the Graph with new data, 
+        """Updates the Graph with new data,
         this data beeing an 2 dim array of voltage and power"""
         if self.results:
             voltage = np.array(self.results)[:,0]
@@ -165,16 +165,16 @@ class data_monitor(QVBoxLayout):
             self.graph.plot(title="power", x=voltage, y=power)
 
     def update_table(self,data):
-        """Updates the table with new data. 
+        """Updates the table with new data.
         Data is array with voltage, current, phaseshift and power"""
         #print(data)
         self.table.insertRow(self.table.rowCount())
         for i,d in enumerate(data):
             self.table.setItem(self.table.rowCount()-1,i,QTableWidgetItem(str(d)))
         self.table.scrollToBottom()
-            
-        
-    
+
+
+
 class ctrl_panel(QVBoxLayout):
     def __init__(self):
         super().__init__()
@@ -191,7 +191,7 @@ class sweep_tab(QWidget):
     def __init__(self):
         """ Don't look at it!"""
         super().__init__()
-        
+
         l_main_Layout = QVBoxLayout()
         self.sweeping = False
 
@@ -199,13 +199,13 @@ class sweep_tab(QWidget):
         power_group = QGroupBox()
         power_layout = QVBoxLayout()
         power_group.setLayout(power_layout)
-        
+
         show_power_row = QHBoxLayout()
         #self.power_label = QLabel("0 W")
         show_power_row.addWidget(QLabel("Start/Pause Measurement"))
        # show_power_row.addWidget(self.power_label)
         power_layout.addLayout(show_power_row)
-        
+
         power_btn_row = QHBoxLayout()
         power_start_btn = QPushButton("Start")
         power_start_btn.clicked.connect(self.start_sweep)
@@ -214,30 +214,30 @@ class sweep_tab(QWidget):
         power_btn_row.addWidget(power_start_btn)
         power_btn_row.addWidget(power_stop_btn)
         power_layout.addLayout(power_btn_row)
-        
+
         l_main_Layout.addWidget(power_group)
-        
+
         # Reference stuff
         ref_group = QGroupBox()
         ref_layout = QVBoxLayout()
         ref_group.setLayout(ref_layout)
-        
+
         show_ref_row = QHBoxLayout()
         self.ref_label = QLabel("Undef")
         show_ref_row.addWidget(QLabel("Reference Phaseshift:"))
         show_ref_row.addWidget(self.ref_label)
         ref_layout.addLayout(show_ref_row)
-                
+
         ref_btn_row = QHBoxLayout()
         ref_start_btn = QPushButton("Find")
         ref_start_btn.clicked.connect(self.find_ref)
         ref_btn_row.addWidget(ref_start_btn)
         ref_layout.addLayout(ref_btn_row)
-        
+
         l_main_Layout.addWidget(ref_group)
-        
+
         self.setLayout(l_main_Layout)
-        
+
     def start_sweep(self):
         if not self.sweeping:
             self.this_sweep = sweeper(channel_assignment, volcal, voltage_ref_phase, current_ref_phase)
@@ -247,68 +247,70 @@ class sweep_tab(QWidget):
     def stop_sweep(self):
         self.sweeping = False
         self.this_sweep.stop()
-        
+
     def find_ref(self):
         if not self.sweeping:
             global voltage_ref_phase, current_ref_phase, voltage_ref_phase_std, current_ref_phase_std
             self.this_sweep = sweeper(channel_assignment, volcal, voltage_ref_phase, current_ref_phase)
             voltage_ref_phase, current_ref_phase, voltage_ref_phase_std, current_ref_phase_std = self.this_sweep.find_ref()
             self.ref_label.setText(str(voltage_ref_phase - current_ref_phase) + " +- " + str(voltage_ref_phase_std + current_ref_phase_std))
-        
-        
+
+
 class settings_tab(QWidget):
     def __init__(self):
         super().__init__()
         l_main_Layout = QVBoxLayout()
-        
+
         # UI to assign scope channels
         chan_group =  QGroupBox()
         chan_layout = QVBoxLayout()
         chan_group.setLayout(chan_layout)
-        
+
         chan_rows = []
         for channel_num in range(1,5):
             this_channel = channel_settings(channel_num)
             chan_rows.append(this_channel)
             chan_layout.addLayout(this_channel)
-        
+
         l_main_Layout.addWidget(chan_group)
-        
-        
+
+
         # UI to set or find voltage callibration factor
         volcal_group = QGroupBox()
         volcal_layout = QVBoxLayout()
         volcal_group.setLayout(volcal_layout)
         volcal_row = QHBoxLayout()
-        
+
         self.volcal_box = QLineEdit(str(volcal))
         self.volcal_box.setMaximumWidth(100)
         self.volcal_box.textChanged.connect(self.change_volcal)
         self.volcal_std_label = QLabel()
         volcal_get = QPushButton("Find")
         volcal_get.clicked.connect(self.get_volcal)
-        volcal_row.addWidget(QLabel("Callibration Factor: "))
+        volcal_row.addWidget(QLabel("Callibration Factor U: "))
         volcal_row.addWidget(self.volcal_box)
         volcal_row.addWidget(self.volcal_std_label)
         volcal_row.addWidget(volcal_get)
-        
+        volcal_row.addWidget(QLabel("Curent Factor"))
+
+
         volcal_layout.addLayout(volcal_row)
         l_main_Layout.addWidget(volcal_group)
-        
+
         self.setLayout(l_main_Layout)
-        
+
     def change_volcal(self):
-        global volcal 
+        global volcal
         volcal = float(self.volcal_box.text())
-        
+
     def get_volcal(self):
         self.this_sweep = sweeper(channel_assignment, volcal, voltage_ref_phase, current_ref_phase)
         self.volcal_box.setText(str(self.this_sweep.calibrate()))
         self.volcal_std_label.setText(str(volcal_std))
-        
-        
 
-  
+
+
+
 class channel_settings(QHBoxLayout):
     def __init__(self, number):
         """Beware, Channels are numbered 1 to 4"""
@@ -321,15 +323,15 @@ class channel_settings(QHBoxLayout):
         self.addWidget(self.chan_cbox)
         self.chan_cbox.setCurrentIndex(chan_options.index(channel_assignment[self.number]))
         self.chan_cbox.currentIndexChanged.connect(self.change_channel)
-        
+
     def change_channel(self):
         global channel_assignment
         this_chan_ass = channel_assignment
-        
+
         this_chan_ass[self.number] = self.chan_cbox.currentText()
         channel_assignment = this_chan_ass
 
-        
+
 class scope_tab(QWidget):
     def __init__(self):
         """Choose and configure scope"""
@@ -338,34 +340,34 @@ class scope_tab(QWidget):
         #device_list = visa_rm.list_resources()
         device_list = ["USB0::0x0957::0x175D::INSTR"]
         l_main_Layout = QVBoxLayout()
-        
+
         device_group = QGroupBox()
         device_layout = QVBoxLayout()
         device_group.setLayout(device_layout)
         device_row = QHBoxLayout()
-        
+
         self.device_cbox = QComboBox()
         self.device_cbox.addItems(device_list)
-        
+
         self.use_device_btn = QPushButton()
-        self.use_device_btn.clicked.connect(self.choose_scope)        
+        self.use_device_btn.clicked.connect(self.choose_scope)
 
         device_row.addWidget(QLabel("Device: "))
         device_row.addWidget(self.device_cbox)
         device_row.addWidget(self.use_device_btn)
         device_layout.addLayout(device_row)
-        
+
         l_main_Layout.addWidget(device_group)
         self.setLayout(l_main_Layout)
-        
+
     def choose_scope(self):
         print("Nope")
         #scope_id = self.device_cbox.currentText()
         #if not sim:
             #scope = ivi.agilent.agilentMSO7104B()
             #scope.initialize(scope_id)
-   
-    
+
+
 
 class sweeper():
     def __init__(self, channels, volcal, v_ref, c_ref):
@@ -379,18 +381,18 @@ class sweeper():
         self.io_process = Process(target=self.io_worker, args=(self.data_queue,))
         self.fit_process_list = []
         for i in range(cpu_count()-1):
-            this_fit_proccess = Process(target=self.fit_worker, args=(self.data_queue, result_queue)) 
+            this_fit_proccess = Process(target=self.fit_worker, args=(self.data_queue, result_queue))
             self.fit_process_list.append(this_fit_proccess)
-    
-    
+
+
     def start(self):
         if not self.io_process.is_alive():
             self.io_process.start()
         for fit_process in self.fit_process_list:
             if not fit_process.is_alive():
                 fit_process.start()
-        
-        
+
+
     def stop(self):
         if self.io_process.is_alive():
             self.io_process.terminate()
@@ -401,35 +403,35 @@ class sweeper():
                 fit_process.terminate()
             while not self.data_queue.empty():
                 trash = self.data_queue.get()
-    
+
     def calibrate(self):
         cal_queue = Queue(ref_size*2) # Don't ask
         self.io_process.start()
-        this_fit_proccess = Process(target=self.fit_worker, args=(self.data_queue, cal_queue, False, True, ref_size)) 
+        this_fit_proccess = Process(target=self.fit_worker, args=(self.data_queue, cal_queue, False, True, ref_size))
         this_fit_proccess.start()
         this_fit_proccess.join()
         self.io_process.terminate()
-        
+
         volcal_list = []
         while not cal_queue.empty():
             this_result = cal_queue.get()
             this_volcal = this_result[1]/this_result[0]
             volcal_list.append(this_volcal)
-        
+
         global volcal, volcal_std
         volcal = np.average(volcal_list)
         volcal_std = np.std(volcal_list)
-    
+
         return volcal
-    
+
     def find_ref(self):
         ref_queue = Queue(ref_size*2) # Don't ask
         self.io_process.start()
-        this_fit_proccess = Process(target=self.fit_worker, args=(self.data_queue, ref_queue, True, False, ref_size)) 
+        this_fit_proccess = Process(target=self.fit_worker, args=(self.data_queue, ref_queue, True, False, ref_size))
         this_fit_proccess.start()
         this_fit_proccess.join()
         self.io_process.terminate()
-        
+
         v_phases = []
         c_phases = []
         while not ref_queue.empty():
@@ -466,9 +468,9 @@ class sweeper():
         current_ref_phase_std = c_phase_std
         self.v_ref = voltage_ref_phase
         self.c_ref = current_ref_phase
-        return (voltage_ref_phase, current_ref_phase, voltage_ref_phase_std, current_ref_phase_std) 
-        
-    
+        return (voltage_ref_phase, current_ref_phase, voltage_ref_phase_std, current_ref_phase_std)
+
+
     def io_worker(self, data_queue):
         """ Gets waveforms from the scope and puts them into the data_queue."""
         #scope = ivi.lecroy.lecroyWS3054(scope_id)
@@ -486,8 +488,8 @@ class sweeper():
                 if chan_name != "nothing":
                     data_dict[chan_name] = scope.channels[chan_num-1].measurement.fetch_waveform()
             data_queue.put(data_dict)
-                
-    
+
+
     def fit_worker(self, data_queue, result_queue, raw=False, cal=False, num=-1):
         """Takes data_queue and fits a sinus. Returns 4-tuple of voltage,current, phaseshift and power if raw=False,
         else a 6 tuple of amp, freq and phase for both voltage and current.
@@ -519,7 +521,7 @@ class sweeper():
             if not cal and not raw:
                 result = (voltage_rms, current_rms, phaseshift, power)
             result_queue.put(result)
-        
+
     def fit_func(self,data):
         data = np.array(data)
         time = data[:,0]
@@ -530,7 +532,7 @@ class sweeper():
         guess_phase = 0
         guess_y0 = 0
         guess_frequency = frequency
-        
+
         amp = amplitude[:100]
         #for i in amp:
         #    print(i)
@@ -540,8 +542,8 @@ class sweeper():
         #print(sum(amplitude)) # does not work. why
         #number = amplitude[-1]
         #print(type(number))
-            
-        
+
+
 
 
         data_first_guess = (guess_amplitude
@@ -565,13 +567,10 @@ class sweeper():
         #print(guess_mean)
         print(est_freq)
         return (est_ampl, est_freq, est_phase%(2*np.pi))
-  
-if __name__ == '__main__': 
+
+if __name__ == '__main__':
     app = QApplication(sys.argv)
     #if debug:
         #print("DEBUGing is on, additional information will be printed to stdout\n")
     this_main_window = main_window()
     sys.exit(app.exec_())
-
-    
-    
