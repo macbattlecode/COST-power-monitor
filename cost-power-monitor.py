@@ -34,11 +34,12 @@ import matplotlib.pyplot as plt
 
 channel_assignment = {1: "nothing", 2: "internal voltage", 3: "current", 4: "nothing"}
 sim = False
-volcal = 2250
+volcal = 1495
 volcal_std = 50
 #scope_id = "USB0::0x05FF::0x1023::LCRY3702N14161::INSTR"
 scope_id = "USB0::2391::6042::MY52141064::INSTR"
-resistance = 4.2961608775
+#resistance = 4.2961608775
+resistance = 0.103
 frequency = 13560000
 result_queue = Queue(100)
 voltage_ref_phase = 0
@@ -287,12 +288,10 @@ class settings_tab(QWidget):
         self.volcal_std_label = QLabel()
         volcal_get = QPushButton("Find")
         volcal_get.clicked.connect(self.get_volcal)
-        volcal_row.addWidget(QLabel("Callibration Factor U: "))
+        volcal_row.addWidget(QLabel("Callibration Factor: "))
         volcal_row.addWidget(self.volcal_box)
         volcal_row.addWidget(self.volcal_std_label)
         volcal_row.addWidget(volcal_get)
-        volcal_row.addWidget(QLabel("Curent Factor"))
-
 
         volcal_layout.addLayout(volcal_row)
         l_main_Layout.addWidget(volcal_group)
